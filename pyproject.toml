@@ -12,4 +12,5 @@ members = [
     "packages/rag-core",
     "packages/agent-core",
     "packages/ai-api",
+    "apps/python-basic",
 ]
