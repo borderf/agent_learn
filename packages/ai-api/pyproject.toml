@@ -1,0 +1,23 @@
+[project]
+name = "ai-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "borderf", email = "15653771198@163.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.136.3",
+]
+
+[project.scripts]
+ai-api = "ai_api:main"
+
+[[tool.uv.index]]
+url = "http://mirrors.aliyun.com/pypi/simple"
+default = true
+
+[build-system]
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
