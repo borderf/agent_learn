@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from pathlib import Path
+import json
+import os
 
 
 @dataclass
@@ -50,8 +52,14 @@ def split_text(
     return chunks
 
 
+def save_chunks_json(chunks: list[Chunk], filePath: Path | str) -> None:
+    chunks_dict = [asdict(chunk) for chunk in chunks]
+    with open(filePath, "w", encoding="utf-8") as f:
+        json.dump(chunks_dict, f, ensure_ascii=False, indent=2)
+
+
 def main() -> None:
-    path = Path("sample.md")
+    path = Path("./01_Python后端基础.md")
     text = normalize_text(path.read_text(encoding="utf-8"))
     chunks = split_text(text)
 
@@ -72,8 +80,7 @@ def main() -> None:
     print(f"最大 chunk 长度: {max_len}")
     print(f"最小 chunk 长度: {min_len}")
 
-    for chunk in chunks:
-        print(f"Chunk: {chunk.index}: {chunk.start}-{chunk.end}, len={len(chunk.text)}")
+    save_chunks_json(chunks, "chunks.json")
 
 
 if __name__ == "__main__":
