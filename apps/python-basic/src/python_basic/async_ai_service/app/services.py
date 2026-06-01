@@ -3,6 +3,7 @@ import logging
 import time
 import httpx
 import tenacity
+from typing import AsyncGenerator
 import json
 from python_basic.core.config import settings
 
@@ -92,3 +93,62 @@ class LLMService:
             usage = data.get("usage", {})
             logger.info("LLM call took %.0f ms, tokens: %s", elapsed_ms, usage)
             return answer, elapsed_ms
+
+    async def chat_stream(self, question: str) -> AsyncGenerator[str, None]:
+        """
+        流式对话，每产出新的 token 立即 yield。
+        使用方式：
+            async for token in service.chat_stream("hello"):
+                print(token, end="", flush=True)
+        """
+        async with self._semaphore:
+            client = await self._get_client()
+            try:
+                async with client.stream(
+                    "POST",
+                    f"{settings.openai_base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {settings.openai_api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": settings.default_model,
+                        "messages": [{"role": "user", "content": question}],
+                        "temperature": 0.7,
+                        "stream": True,
+                    },
+                ) as resp:
+                    resp.raise_for_status()
+                    answer = ""
+                    async for line in resp.aiter_lines():
+                        if not line:  # 跳过空行
+                            continue
+                        line = line.strip()
+                        if line.startswith("data:"):
+                            content = line[5:].strip()  # 移除 "data:" 前缀
+                            if content == "[DONE]":
+                                break
+                            try:
+                                data = json.loads(content)
+                                delta = data["choices"][0]["delta"]
+                                content_token = delta.get("content")
+                                if content_token is not None:
+                                    answer += content_token
+                                    yield content_token
+                            except json.JSONDecodeError:
+                                logger.warning(
+                                    "Failed to parse stream chunk: %s", content
+                                )
+            except httpx.TimeoutException:
+                logger.error("LLM stream timed out, question: %.50s", question)
+                raise
+            except httpx.HTTPStatusError as e:
+                logger.error(
+                    "LLM stream API error %s: %s",
+                    e.response.status_code,
+                    e.response.text[:200],
+                )
+                raise
+            except httpx.RequestError as e:
+                logger.error("LLM stream network error: %s", e)
+                raise
