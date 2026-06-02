@@ -13,4 +13,5 @@ members = [
     "packages/agent-core",
     "packages/ai-api",
     "apps/python-basic",
+    "apps/docker-basic",
 ]

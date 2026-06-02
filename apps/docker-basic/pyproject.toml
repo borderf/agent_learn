@@ -1,0 +1,24 @@
+[project]
+name = "docker-basic"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "borderf", email = "15653771198@163.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.136.3",
+    "uvicorn[standard]>=0.48.0",
+]
+
+[project.scripts]
+docker-basic = "docker_basic:main"
+
+[[tool.uv.index]]
+url = "http://mirrors.aliyun.com/pypi/simple"
+default = true
+
+[build-system]
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
